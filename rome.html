@@ -8,17 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
 
-<!--
-  ============================================================
-  PASTE YOUR GOOGLE MAPS API KEY BELOW (between the quotes).
-  Needs these APIs enabled in Google Cloud Console:
-     - Maps JavaScript API
-     - Places API (New)
-  Real protection for the key = restrict it in Cloud Console
-  (HTTP referrer = your domain + API restrictions). The Enter
-  screen is a friendly landing page, not security.
-  ============================================================
--->
 <script>
   const GOOGLE_MAPS_API_KEY = "AIzaSyA-g1XHWOfvmay2B3ZliOmXH5UcCPmKXR0";
 </script>
@@ -127,19 +116,6 @@
   .nav-arrow:disabled{opacity:.35;cursor:default;}
   .nav-count{font-size:17px;color:#4b5563;font-weight:500;}
 
-  .share-fab{position:absolute;top:22px;left:22px;z-index:1000;background:#fff;border:none;
-    border-radius:30px;padding:11px 18px;font-size:15px;font-weight:600;cursor:pointer;
-    box-shadow:0 4px 16px rgba(0,0,0,.16);display:flex;align-items:center;gap:8px;color:var(--ink);
-    transition:background .14s ease;}
-  .share-fab:hover{background:var(--soft);}
-  .share-fab svg{width:17px;height:17px;}
-
-  .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
-    background:#111;color:#fff;padding:12px 22px;border-radius:30px;font-size:15px;z-index:3000;
-    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;
-    box-shadow:0 8px 24px rgba(0,0,0,.3);}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
   .keywarn{position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:2500;
     background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:14px;
     padding:12px 20px;font-size:14.5px;max-width:90vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.12);display:none;}
@@ -149,7 +125,6 @@
   .sheet-handle{display:none;}
 
   @media (max-width:760px){
-    .share-fab{top:14px;left:14px;padding:9px 15px;font-size:14px;}
     .panel{top:auto;left:0;right:0;bottom:0;width:100%;height:52vh;border-radius:22px 22px 0 0;
       box-shadow:0 -8px 30px rgba(0,0,0,.18);transition:height .25s ease;}
     .panel.collapsed{height:128px;}
@@ -214,20 +189,11 @@
 
 <div id="map"></div>
 
-<div class="keywarn" id="keywarn">
-  Add your Google Maps API key in the file (replace <code>PASTE_YOUR_KEY_HERE</code>) to load the map and photos.
-</div>
-
-<button class="share-fab" onclick="sharePrototype()">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-  Share
-</button>
-
 <div class="panel" id="panel">
   <div class="sheet-handle" id="handle"></div>
   <div class="panel-head">
-    <h1><span style="font-weight:normal">36 Hours in</span> Rome</h1>
-    <p>All stops from the NYT itinerary — museums, ruins, restaurants, bars, and gelato. Friday evening through Sunday lunch.</p>
+    <h1><span style="font-weight:normal">All things</span> Rome</h1>
+    <p>Stops from the NYT itinerary — museums, ruins, restaurants, bars, and gelato. Friday evening through Sunday lunch.</p>
   </div>
   <div class="list" id="list"></div>
 </div>
@@ -264,8 +230,6 @@
     </button>
   </div>
 </div>
-
-<div class="toast" id="toast">Link copied to clipboard</div>
 
 <script>
 const VILLA = { name:"Hotel (Rome)", lat:41.9028, lng:12.4964 };
@@ -535,7 +499,7 @@ handle.addEventListener('click', ()=>{ if(isMobile()) panel.classList.toggle('co
 })();
 
 // Load map immediately
-startMap();
+loadGoogleMaps();
 
 </script>
 </body>
