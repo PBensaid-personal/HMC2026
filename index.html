@@ -3,22 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Corsica: Casa Sopra Trip (Sept 2026)</title>
+<title>36 Hours in Rome – NYT Itinerary</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
 
-<!--
-  ============================================================
-  PASTE YOUR GOOGLE MAPS API KEY BELOW (between the quotes).
-  Needs these APIs enabled in Google Cloud Console:
-     - Maps JavaScript API
-     - Places API (New)
-  Real protection for the key = restrict it in Cloud Console
-  (HTTP referrer = your domain + API restrictions). The Enter
-  screen is a friendly landing page, not security.
-  ============================================================
--->
 <script>
   const GOOGLE_MAPS_API_KEY = "AIzaSyA-g1XHWOfvmay2B3ZliOmXH5UcCPmKXR0";
 </script>
@@ -208,37 +197,17 @@
   }
 </style>
 </head>
-<body class="locked">
+<body>
 
-<div id="gate">
-  <div class="gate-inner">
-    <p class="gate-kicker">Celebrating Hillary & Paco &nbsp;|&nbsp; September 2026</p>
-    <h1 class="gate-title">
-      <span class="l1">Corsica</span>
-      <span class="l2">is Hilarious!</span>
-    </h1>
-    <div class="gate-form">
-      <button type="button" onclick="unlock(true)">Enter</button>
-    </div>
-  </div>
-</div>
+
 
 <div id="map"></div>
-
-<div class="keywarn" id="keywarn">
-  Add your Google Maps API key in the file (replace <code>PASTE_YOUR_KEY_HERE</code>) to load the map and photos.
-</div>
-
-<button class="share-fab" onclick="sharePrototype()">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-  Share
-</button>
 
 <div class="panel" id="panel">
   <div class="sheet-handle" id="handle"></div>
   <div class="panel-head">
-    <h1><span style="font-weight:normal">Hilary and Paco turned 60</span> Let's party!</h1>
-    <p>Everything from your itinerary, pinned and routed from Casa Sopra. Beaches, hikes, boat departure points, dining, the vineyard, market, and Figari airport.</p>
+    <h1><span style="font-weight:normal">All things</span> Rome</h1>
+    <p>Stops from the NYT itinerary — museums, ruins, restaurants, bars, and gelato. Friday evening through Sunday lunch.</p>
   </div>
   <div class="list" id="list"></div>
 </div>
@@ -260,7 +229,7 @@
     <div class="detail-sub" id="dSub"></div>
     <div class="actions" id="dActions"></div>
     <div class="notes" id="dNotes" style="display:none;">
-      <p class="label">Notes from Claude</p>
+      <p class="label">Notes from NYT</p>
       <p id="dNotesText"></p>
     </div>
     <div class="contact" id="dContact"></div>
@@ -279,43 +248,41 @@
 <div class="toast" id="toast">Link copied to clipboard</div>
 
 <script>
-const VILLA = { name:"Casa Sopra (Villa)", lat:41.654087, lng:9.345066 };
+const VILLA = { name:"Hotel (Rome)", lat:41.9028, lng:12.4964 };
 
 const PLACES = [
-  {name:"Casa Sopra (Villa)", lat:41.654087, lng:9.345066, type:"Villa", home:true, photos:["https://cdn.lecollectionist.com/__lecollectionist__/production/houses/8800/photos/HCVN9cXkSWu39JkanCYN_52e69cb2-e805-402e-995d-49c9abc92ba9.jpg?width=1872&force_format=webp&q=50"], notes:"Home base. Strapazzola, Sainte Lucie de Porto Vecchio. ~35 min from Figari airport."},
-  {name:"Figari Airport (FSC)", pid:"ChIJl9pJtYvT2xIRNkKtc-fcylA", lat:41.4986918, lng:9.0982729, rating:3.3, count:1518, type:"Airport", phone:"+33 4 95 71 10 10", website:"https://figari-aeroport.cci.corsica/", notes:"Closest airport, ~35 min. Small and chaotic in season; build in buffer time."},
-  {name:"Rondinara Bay", pid:"ChIJMb_oO6Z-2RIRQyhduRLd_CM", lat:41.4679718, lng:9.2668734, rating:4.4, count:6199, type:"Beach", phone:"+33 4 95 73 11 88", website:"http://www.bonifacio.fr/", notes:"Shell-shaped lagoon. Go before 10 AM to park. Parking ~6 euro/day. Chez Ange on the sand."},
-  {name:"Santa Giulia Beach", pid:"ChIJ7ZE1wQB_2RIRmdsTMdyTqf4", lat:41.5311579, lng:9.2737819, rating:4.3, count:10421, type:"Beach", notes:"Resort-chic, shallow water, gets crowded. Beach-club loungers. Late Sept = paradise."},
-  {name:"Palombaggia", pid:"ChIJ0w9YUIqC2RIRL7bpRUsVYG4", lat:41.5579257, lng:9.3253045, rating:4.6, count:3826, type:"Beach", notes:"The postcard beach. Red rocks + pines. Morning swim ~9 AM before crowds. Pricey parking."},
-  {name:"Roccapina Beach", pid:"ChIJt78GCgPM2xIRJfvMoJYP9jw", lat:41.4964134, lng:8.9328304, rating:4.6, count:2063, type:"Beach", phone:"+33 6 89 43 22 58", website:"https://www.cf-corse.fr/plage-corse/roccapina/", notes:"Wild cove under Lion Rock. ~1 hr. Rough dirt track in (SUV strongly advised). Bring food/water."},
-  {name:"Piscines Naturelles de Cavu", pid:"ChIJ5SI73CSP2RIR1SCBZpCw5vo", lat:41.732496, lng:9.293011, rating:4.6, count:5195, type:"Natural pools", phone:"+33 4 95 21 78 04", website:"http://www.atyroliana.com/", notes:"Warm river pools, smooth boulder sunbeds. 10-15 min flat walk. Les 3 Piscines at trailhead. Great recovery day."},
-  {name:"Trou de la Bombe (Bavella)", pid:"ChIJ3y8NhHiJ2RIRg5SeD0ylqiE", lat:41.778626, lng:9.234601, rating:4.7, count:419, type:"Hike", notes:"~3 hr round trip from Col de Bavella. Rocky scramble at the end. Crowded in Sept. Auberge du Col de Bavella at trailhead."},
-  {name:"Piscia di Gallu Waterfall", pid:"ChIJCxmSoI2H2RIRnp-2QYZ7hKI", lat:41.6806159, lng:9.2155734, rating:4.6, count:2454, type:"Hike", notes:"60m waterfall, ~2 hr round trip. Steep, slippery final descent; good shoes. Park at Ospedale dam. ~5 euro parking."},
-  {name:"Sentier des Bruzzi (Chevanu)", pid:"ChIJNxXbFOzR2xIRcq3iHbFF2HY", lat:41.47146, lng:9.0307932, rating:4.7, count:414, type:"Hike", website:"https://tinyurl.com/bdh7zd69", notes:"Easy ~1.5 hr coastal loop, red rocks + coves. Little shade, bring water. Golden-hour walk. Pairs with Clos Canarelli."},
-  {name:"Tour de Fautea (Genoese Tower)", pid:"ChIJEWkR5l2Q2RIRbEr8sAU4KaA", lat:41.7134611, lng:9.4055344, rating:4.6, count:299, type:"Landmark", notes:"Easy 20-min climb, two bays in one view. Best at sunset. ~15 min north."},
-  {name:"Canyon du Pulischellu", pid:"ChIJ97Kb_J6L2RIRQp-Y7iNhEPA", lat:41.8231776, lng:9.2642134, rating:4.5, count:198, type:"Canyoning", phone:"+33 6 12 39 54 75", website:"http://canyoningcorse.fr/", notes:"Canyoning: rock slides into pools. Book a morning slot, wetsuits provided. ~1 hr 15 (Bavella)."},
-  {name:"Porto-Vecchio Marina", pid:"ChIJPwTGrtaD2RIRzlsAVMPpuBQ", lat:41.5901321, lng:9.2831827, rating:4.3, count:3314, type:"Marina", phone:"+33 4 95 70 17 93", website:"https://marina.portivechju.corsica/", notes:"Main marina for Lavezzi + Cavallo catamaran charters. Book 6-8 weeks ahead. ~20 min. Note: marina undergoing works."},
-  {name:"Marina di Fiori (St-Cyprien port)", pid:"ChIJg8uoJiOD2RIR5jWW-tOqRV8", lat:41.6100973, lng:9.2934187, rating:4.6, count:15, type:"Marina", phone:"+33 6 46 61 93 22", website:"https://www.portmarinadifiori.com/", notes:"Nearest port to villa for small motorboats (Pinarello + Fautea, no skipper). Very close."},
-  {name:"Embarcadere des Iles Lavezzi", pid:"ChIJcY1Ylbtj2RIRv6imolQZq68", lat:41.3400982, lng:9.2585882, rating:4.7, count:119, type:"Boat departure", notes:"Lavezzi marine reserve: clearest water in the Med. Full-day catamaran. Last boat back ~4:30 PM."},
-  {name:"La Ferme de Cavallo", pid:"ChIJlR1Rm2dj2RIRhi-hJUipcCU", lat:41.3701285, lng:9.259752, rating:3.9, count:100, type:"Restaurant", phone:"+33 6 37 10 46 89", website:"https://instagram.com/lafermecavallo", notes:"Exclusive lunch on private Cavallo island, arrive by boat. Stunning views but very pricey and they upsell hard."},
-  {name:"Pinarello Beach", pid:"ChIJLXT7kLGa2RIRSCd76YDt5s4", lat:41.6842791, lng:9.3736823, rating:4.7, count:43, type:"Beach", notes:"Pine forest runs to the sand = rare natural shade in Sept. Picnic-day beach. ~15 min."},
-  {name:"Bonifacio Port", pid:"ChIJJ5pmgSXY2xIRZl-hyM6L-zs", lat:41.3885543, lng:9.1567937, rating:4.6, count:135, type:"Boat departure", notes:"Medieval citadel + cliffs. ~40 min. Lobster pasta at Le Voilier. Boat charters depart here too."},
-  {name:"Le Voilier (Bonifacio)", pid:"ChIJgfxZgCPY2xIRFzBfEqskNpo", lat:41.3880713, lng:9.162365, rating:4.3, count:562, type:"Restaurant", phone:"+33 6 24 79 75 65", website:"http://www.levoilier-bonifacio.com/", notes:"Spiny lobster / fresh fish at the port. Pre-book for your Bonifacio day. Closed Tuesdays."},
-  {name:"Tamaricciu (Palombaggia)", pid:"ChIJE8u5DGOC2RIRbTQKodYrtZo", lat:41.5534473, lng:9.3181647, rating:4.3, count:886, type:"Restaurant", phone:"+33 4 95 70 49 89", website:"https://www.tamaricciu.com/", notes:"High-end lunch under the pines on the postcard beach. Book ~1:30 PM. Reserve ahead, gets crowded."},
-  {name:"Le Dune (Palombaggia)", pid:"ChIJw9uEzSCD2RIRzVB2A-xvWbw", lat:41.5459488, lng:9.3036828, rating:4.6, count:334, type:"Restaurant", phone:"+33 6 58 14 09 92", website:"https://www.instagram.com/ledune.portovecchio/", notes:"Sunset BBQ on quiet Asciaghju beach. Grilled lobster + prime rib. Reserve for Sept 10-20."},
-  {name:"Le Rouf (Pinarello)", pid:"ChIJP3tsYuua2RIRtw0DCyvf4FY", lat:41.6824908, lng:9.3755804, rating:4.3, count:632, type:"Restaurant", phone:"+33 4 95 71 50 48", website:"https://www.lepinarello.com/le-rouf", notes:"Sea-view fine dining after boating. Reserve 2-3 dinners. Closed Mondays; book the terrace specifically."},
-  {name:"Ferme-Auberge A Pinzutella", pid:"ChIJxRl16THt2RIRjaqvXrjEDAk", lat:41.8528913, lng:9.354957, rating:4.3, count:136, type:"Restaurant", phone:"+33 4 95 57 41 18", website:"https://aubergeapinzutella.wixsite.com/website", notes:"Rustic farm-to-table: wild boar, veal, chestnut polenta. Stone farmhouse with Bavella views. Long slow lunch. ~50 min."},
-  {name:"Clos Canarelli (Vineyard)", pid:"ChIJ9xW1RDvU2xIRUfDjylJcTHs", lat:41.5263776, lng:9.146174, rating:4.1, count:55, type:"Vineyard", phone:"+33 4 95 71 07 55", website:"http://www.closcanarelli.com/", notes:"Prestigious organic/biodynamic vineyard near Figari. Book afternoon tasting. Closed Sat/Sun. Pairs with Bruzzi hike."},
-  {name:"Porto-Vecchio Market", pid:"ChIJSVQywAmD2RIRXnkw2LTsN5Q", lat:41.5911261, lng:9.2786827, rating:4.4, count:16, type:"Market", notes:"Sunday market: charcuterie, cheese, honey, produce. Head to the far end for the best Corsican charcuterie producer."}
+  {name:"Museo della Forma Urbis", pid:"ChIJZ7c578lhLxMR3G-oln-WuLM", lat:41.8872, lng:12.4923, type:"Museum", notes:"New museum mixing archaeology and cartography. Floor embossed with an 18th-century map + 3rd-century stone slabs. Free archaeological park outside. €11 admission. Last entry 6:15 PM."},
+  {name:"Domus Tiberiana (Palatine Hill)", pid:"ChIJA1aK_LRhLxMRJ6Hw0arUiyI", lat:41.8896, lng:12.4875, type:"Ruin", notes:"Reopened in 2023 after decades of closure. Multimedia exhibitions in a 1st-century palace. Prime sunset views of the Forum and Colosseum. Combined ticket with Forum + Colosseum €18, valid 24 hrs."},
+  {name:"Uma Roma", pid:"ChIJV59_iGxhLxMRN9TZz9JP0rY", lat:41.8606, lng:12.4720, type:"Restaurant", notes:"Scandinavian-minimalist trattoria in Garbatella. Fermentation-focused tasting menu by two Italian chefs (one formerly at Noma). 4 courses + 4 snacks €50. Book well ahead — very popular."},
+  {name:"Nite Kong (Drink Kong)", pid:"ChIJf3VE-7xhLxMRnMf_uACwlXc", lat:41.8966, lng:12.4986, type:"Bar", notes:"Backroom reservation-only lounge in Monti. Sultry vibe, live music. Try the Nite Negroni — redistilled to crystal clarity in their lab. €18. Reservation required."},
+  {name:"Jerry Thomas Bar Room", pid:"ChIJtVi6jkRgLxMR187T1pZelGw", lat:41.8895, lng:12.4691, type:"Bar", notes:"Second outpost of the legendary Jerry Thomas Speakeasy, in Trastevere. 6 intimate tables. Prohibition-era design. The Consulate (rum, vermouth, sherry, apricot bitters) is €15."},
+  {name:"Villa Torlonia", pid:"ChIJdd6JQHJhLxMRG9JQQ8hqbL8", lat:41.9166, lng:12.5108, type:"Park & Museum", notes:"Rolling, grassy cultural complex with 19th-century buildings. Casino Nobile has frescoed ceilings and marble floors. Serra Moresca greenhouse has kaleidoscopic Moorish glass. Mussolini's WWII air-raid bunker opened to the public last year. All-access €17."},
+  {name:"La Limonaia (Villa Torlonia café)", pid:"ChIJ4SP3QXJhLxMR75HSqjU60JA", lat:41.9168, lng:12.5106, type:"Café", notes:"Quick Roman-style fuel-up inside Villa Torlonia. Cappuccino €1.50, croissant €1.20. Perfect before exploring the grounds."},
+  {name:"Piatto Romano", pid:"ChIJhXXscCVgLxMRa2Bc06UkXPI", lat:41.8796, lng:12.4778, type:"Restaurant", notes:"Traditional trattoria near Testaccio market. Roman classics: carbonara, amatriciana, deep-fried artichoke, rigatoni with calf intestines, coda alla vaccinara. ~€40 for 3 courses. Book ahead."},
+  {name:"Via di Monserrato (Shopping)", pid:"ChIJh1LyS0RgLxMRis6Arx2IXCI", lat:41.8958, lng:12.4655, type:"Shopping", notes:"Cobbled street lined with stone palazzos in western Centro Storico. Find: Illuminami (Gothic/Victorian wallpapers), Spazio Giallo (Italian ceramics), Le Tre Sarte (theatrical fashion). Great for an afternoon browse."},
+  {name:"Santa Maria del Popolo", pid:"ChIJn8_twvhgLxMRrSlE7RYxCbg", lat:41.9107, lng:12.4763, type:"Church", notes:"Medieval and Renaissance basilica. Home to two Caravaggio masterpieces in their original setting: Crucifixion of St. Peter and Conversion of St. Paul. Also: Raphael statue of Elijah, two Bernini statues. Free admission."},
+  {name:"Marita (Pizzeria)", pid:"ChIJy9xETGRhLxMRYvPykOzMT34", lat:41.9070, lng:12.4657, type:"Restaurant", notes:"Pizza by Roberta Esposito — Italy's Top Emerging Pizzamaker 2018, Pizza of the Year 2022. Try the Summer Light (€20) or the Amarita: mozzarella, semi-burnt guanciale + copper pot of amatriciana (€15)."},
+  {name:"Vino e Vinili", pid:"ChIJe3sJQNthLxMRvy3EF26-RGQ", lat:41.8999, lng:12.4760, type:"Wine Bar", notes:"Neon-lit nook in Centro Storico. Rock 'n' roll books, vinyl albums, natural wines. Nebbiolo by Poderi Cellario €8/glass. Tiny and cozy — perfect late-night stop."},
+  {name:"33 Giri", pid:"ChIJQygRTABhLxMRRDxP83e4yZY", lat:41.9025, lng:12.4570, type:"Wine Bar", notes:"Near the Vatican. Gallery-like design: white walls, candles, flamboyant flowers. DJs spin soul and funk. Sangiovese-Trebbiano blend by Senza Rete €10/glass."},
+  {name:"Piazza della Rotonda (Pantheon)", pid:"ChIJqUCGZ09gLxMRLM42IPpl0co", lat:41.8986, lng:12.4769, type:"Landmark", notes:"Marvel at the marble fountain's carved serpents, sea creatures and grotesque faces — directly across from the Pantheon, which Stendhal called 'the most beautiful remains from ancient Rome.' Newly scrubbed clean for the Jubilee."},
+  {name:"Fontana dei Quattro Fiumi (Piazza Navona)", pid:"ChIJG6cU-09gLxMR8hkxk2gJcFI", lat:41.8991, lng:12.4730, type:"Landmark", notes:"Bernini's 17th-century masterpiece: four figures representing the Nile, Danube, Ganges, and Rio de la Plata. One of Rome's most dramatic piazzas. Newly refurbished."},
+  {name:"Piazza Farnese", pid:"ChIJfyVJ5kVgLxMR0GCfU6CY8cM", lat:41.8961, lng:12.4664, type:"Landmark", notes:"Two elegant fountains using 3rd-century granite basins from the Baths of Caracalla. Palazzo Farnese's Renaissance façade partly designed by Michelangelo."},
+  {name:"Otaleg! Gelato (Trastevere)", pid:"ChIJ9Y5rI7KKJRMRs5I2u26nGM8", lat:41.8892, lng:12.4697, type:"Gelato", notes:"Famous for lush pistachio (nuts from Turkey and Iran). Also creative flavors like mascarpone with crab or creamy avocado with lime. Two flavors €3. No seats — stroll Trastevere's cobbled passageways."},
+  {name:"Fatamorgana Gelato (Trastevere)", pid:"ChIJkVbVdTlgLxMRL_AfGNHHWhk", lat:41.8890, lng:12.4695, type:"Gelato", notes:"Internationally inspired flavors: Mexican Chamoy (tamarind, pepperoncino, Maldon salt) and Pierogi Ruskie (potato, ricotta, red onion, red wine, butter). Two flavors €3."},
+  {name:"Ivo a Trastevere", pid:"ChIJLwrxODhgLxMRQEdqiR-QOyk", lat:41.8887, lng:12.4692, type:"Restaurant", notes:"No-nonsense purveyor of classic Roman thin-crust pizzas since the 1960s. Simple, crowded, and beloved. A local institution for Sunday lunch."}
 ];
-
 const TYPE_GRADIENT = {
-  "Villa":"linear-gradient(135deg,#3b6978,#204051)","Airport":"linear-gradient(135deg,#6b7280,#374151)",
-  "Beach":"linear-gradient(135deg,#5ec4d6,#2a8ba3)","Natural pools":"linear-gradient(135deg,#4fb6a3,#1f7a6b)",
-  "Hike":"linear-gradient(135deg,#7faa5a,#46682f)","Canyoning":"linear-gradient(135deg,#6aa6b8,#356b7d)",
-  "Landmark":"linear-gradient(135deg,#b08968,#6f4e37)","Marina":"linear-gradient(135deg,#5b8fb0,#2d5a73)",
-  "Boat departure":"linear-gradient(135deg,#4d8fc0,#27567a)","Restaurant":"linear-gradient(135deg,#d98a5a,#a85a32)",
-  "Vineyard":"linear-gradient(135deg,#9a6fb0,#5e3a73)","Market":"linear-gradient(135deg,#d4a23c,#9a7320)"
+  "Museum":"linear-gradient(135deg,#6b7fb0,#3a4f80)",
+  "Ruin":"linear-gradient(135deg,#b08968,#6f4e37)",
+  "Restaurant":"linear-gradient(135deg,#d98a5a,#a85a32)",
+  "Bar":"linear-gradient(135deg,#5a7ab0,#2d4e7a)",
+  "Wine Bar":"linear-gradient(135deg,#9a4f7a,#6b2f55)",
+  "Park & Museum":"linear-gradient(135deg,#7faa5a,#46682f)",
+  "Café":"linear-gradient(135deg,#d4a23c,#9a7320)",
+  "Shopping":"linear-gradient(135deg,#d4a23c,#9a7320)",
+  "Church":"linear-gradient(135deg,#c0a060,#806030)",
+  "Landmark":"linear-gradient(135deg,#7a9ab0,#3a5f80)",
+  "Gelato":"linear-gradient(135deg,#e87a8a,#c04060)"
 };
 function gradFor(p){ return TYPE_GRADIENT[p.type] || "linear-gradient(135deg,#9ca3af,#4b5563)"; }
 const photoIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
@@ -323,7 +290,7 @@ const photoIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 let map, activeIdx = -1, markers = [];
 
 function directionsUrl(p){
-  return `https://www.google.com/maps/dir/?api=1&origin=${VILLA.lat},${VILLA.lng}&destination=${p.lat},${p.lng}&travelmode=driving`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=walking`;
 }
 
 function loadGoogleMaps(){
@@ -344,7 +311,7 @@ async function initMap(){
   const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
 
   map = new Map(document.getElementById('map'), {
-    center:{lat:41.55, lng:9.18}, zoom:10,
+    center:{lat:41.899, lng:12.476}, zoom:13,
     mapId:"DEMO_MAP_ID",
     mapTypeControl:false, streetViewControl:false, fullscreenControl:false,
     gestureHandling:"greedy"
@@ -508,7 +475,7 @@ function nav(dir){
 
 function sharePrototype(){
   const url = window.location.href;
-  if(navigator.share){ navigator.share({title:"Corsica: Casa Sopra Trip (Sept 2026)", url}).catch(()=>{}); }
+  if(navigator.share){ navigator.share({title:"36 Hours in Rome – NYT Itinerary", url}).catch(()=>{}); }
   else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(showToast).catch(showToast); }
   else showToast();
 }
@@ -547,36 +514,9 @@ handle.addEventListener('click', ()=>{ if(isMobile()) panel.classList.toggle('co
   });
 })();
 
-// ===== Enter screen + remember device =====
-const GATE_COOKIE = "casa_sopra_unlocked";
-let mapStarted = false;
+// Load map immediately
+loadGoogleMaps();
 
-function setUnlockCookie(){
-  const d = new Date(); d.setFullYear(d.getFullYear()+1);
-  document.cookie = `${GATE_COOKIE}=1; expires=${d.toUTCString()}; path=/; SameSite=Lax`;
-}
-function hasUnlockCookie(){
-  return document.cookie.split(';').some(c => c.trim().startsWith(GATE_COOKIE+'='));
-}
-function startMap(){ if(!mapStarted){ mapStarted = true; loadGoogleMaps(); } }
-
-function unlock(remember){
-  if(remember) setUnlockCookie();
-  const gate = document.getElementById('gate');
-  document.body.classList.remove('locked');
-  gate.style.transition = 'opacity .5s ease';
-  gate.style.opacity = '0';
-  setTimeout(()=>{ if(gate.parentNode) gate.remove(); }, 520);
-  startMap();
-}
-
-// returning visitor on this device: skip straight in
-if(hasUnlockCookie()){
-  const gate = document.getElementById('gate');
-  document.body.classList.remove('locked');
-  if(gate.parentNode) gate.remove();
-  startMap();
-}
 </script>
 </body>
 </html>
