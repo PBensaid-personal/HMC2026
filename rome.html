@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>36 Hours in Rome – NYT Itinerary</title>
+<title>Rome</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
@@ -259,11 +259,11 @@
 </div>
 
 <script>
-const DEFAULT_HOME = { name:"Hotel (Rome)", lat:41.9028, lng:12.4964 };
-const HOME_KEY = "rome_home_base";
+const HOME_KEY = "rome_home_base_v3";
 const TEMP_ORIGIN_KEY = "rome_temp_origin";
 
 const PLACES = [
+  {name:"Elizabeth Unique Hotel", pid:"ChIJaW8J1dJgLxMRhO9Xo9F7kH0", lat:41.9070, lng:12.4773, type:"Hotel", home:true, phone:"+39 06 3223633", website:"https://www.elizabethgroup.it/en/elizabeth-unique-rome/", notes:"Home base. Boutique Design Hotel on Via delle Colonnette 35 — a quiet corner of the Tridente, steps from Piazza del Popolo. Perfect starting point for exploring Rome."},
   {name:"Museo della Forma Urbis", pid:"ChIJZ7c578lhLxMR3G-oln-WuLM", lat:41.8872, lng:12.4923, type:"Museum", category:"Destination", notes:"New museum mixing archaeology and cartography. Floor embossed with an 18th-century map + 3rd-century stone slabs. Free archaeological park outside. €11 admission. Last entry 6:15 PM."},
   {name:"Domus Tiberiana (Palatine Hill)", pid:"ChIJA1aK_LRhLxMRJ6Hw0arUiyI", lat:41.8896, lng:12.4875, type:"Ruin", category:"Destination", notes:"Reopened in 2023 after decades of closure. Multimedia exhibitions in a 1st-century palace. Prime sunset views of the Forum and Colosseum. Combined ticket with Forum + Colosseum €18, valid 24 hrs."},
   {name:"Uma Roma", pid:"ChIJV59_iGxhLxMRN9TZz9JP0rY", lat:41.8606, lng:12.4720, type:"Restaurant", category:"Food", notes:"Scandinavian-minimalist trattoria in Garbatella. Fermentation-focused tasting menu by two Italian chefs (one formerly at Noma). 4 courses + 4 snacks €50. Book well ahead — very popular."},
@@ -284,7 +284,9 @@ const PLACES = [
   {name:"Fatamorgana Gelato (Trastevere)", pid:"ChIJkVbVdTlgLxMRL_AfGNHHWhk", lat:41.8890, lng:12.4695, type:"Gelato", category:"Food", notes:"Internationally inspired flavors: Mexican Chamoy (tamarind, pepperoncino, Maldon salt) and Pierogi Ruskie (potato, ricotta, red onion, red wine, butter). Two flavors €3."},
   {name:"Ivo a Trastevere", pid:"ChIJLwrxODhgLxMRQEdqiR-QOyk", lat:41.8887, lng:12.4692, type:"Restaurant", category:"Food", notes:"No-nonsense purveyor of classic Roman thin-crust pizzas since the 1960s. Simple, crowded, and beloved. A local institution for Sunday lunch."}
 ];
+const DEFAULT_HOME = { name:PLACES[0].name, lat:PLACES[0].lat, lng:PLACES[0].lng, pid:PLACES[0].pid, placeIdx:0, custom:false };
 const TYPE_GRADIENT = {
+  "Hotel":"linear-gradient(135deg,#c9a227,#8b6914)",
   "Museum":"linear-gradient(135deg,#6b7fb0,#3a4f80)",
   "Ruin":"linear-gradient(135deg,#b08968,#6f4e37)",
   "Restaurant":"linear-gradient(135deg,#d98a5a,#a85a32)",
@@ -307,40 +309,69 @@ let tempOrigin = loadTempOrigin();
 function loadHomeBase(){
   try{
     const s = localStorage.getItem(HOME_KEY);
-    if(s) return JSON.parse(s);
+    if(s){
+      const h = JSON.parse(s);
+      if(h && typeof h.lat === "number" && typeof h.lng === "number" && h.name) return h;
+    }
   }catch(e){}
-  return {...DEFAULT_HOME};
+  localStorage.removeItem("rome_home_base");
+  localStorage.removeItem("rome_home_base_v2");
+  const home = {...DEFAULT_HOME};
+  localStorage.setItem(HOME_KEY, JSON.stringify(home));
+  return home;
 }
 function saveHomeBase(h){ homeBase = h; localStorage.setItem(HOME_KEY, JSON.stringify(h)); updateHomeBadge(); refreshHomeMarker(); }
 function loadTempOrigin(){
+  localStorage.removeItem(TEMP_ORIGIN_KEY);
   try{
-    const s = localStorage.getItem(TEMP_ORIGIN_KEY);
+    const s = sessionStorage.getItem(TEMP_ORIGIN_KEY);
     if(s) return JSON.parse(s);
   }catch(e){}
   return null;
 }
 function saveTempOrigin(o){
   tempOrigin = o;
-  if(o) localStorage.setItem(TEMP_ORIGIN_KEY, JSON.stringify(o));
-  else localStorage.removeItem(TEMP_ORIGIN_KEY);
+  if(o) sessionStorage.setItem(TEMP_ORIGIN_KEY, JSON.stringify(o));
+  else sessionStorage.removeItem(TEMP_ORIGIN_KEY);
   updateHomeBadge();
 }
 function getDirectionsOrigin(){ return tempOrigin || homeBase; }
+function resolvePid(loc){
+  if(loc.pid) return loc.pid;
+  if(loc.placeIdx != null && PLACES[loc.placeIdx]) return PLACES[loc.placeIdx].pid;
+  return null;
+}
 function directionsUrl(p){
   const origin = getDirectionsOrigin();
-  let url = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=walking`;
-  if(origin) url += `&origin=${origin.lat},${origin.lng}`;
-  return url;
+  const params = new URLSearchParams({ api:"1", travelmode:"driving" });
+  params.set("destination", p.name);
+  if(p.pid) params.set("destination_place_id", p.pid);
+  if(origin){
+    const originPid = resolvePid(origin);
+    if(originPid){
+      params.set("origin", origin.name);
+      params.set("origin_place_id", originPid);
+    } else {
+      params.set("origin", `${origin.lat},${origin.lng}`);
+    }
+  }
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 function setHomeFromPlace(idx){
   const p = PLACES[idx];
-  saveHomeBase({name:p.name, lat:p.lat, lng:p.lng, placeIdx:idx});
+  saveHomeBase({name:p.name, lat:p.lat, lng:p.lng, pid:p.pid, placeIdx:idx, custom:false});
   buildList();
   if(activeIdx===idx) openDetail(idx);
 }
+function resetHomeBase(){
+  saveHomeBase({...DEFAULT_HOME});
+  buildList();
+  if(activeIdx>=0) openDetail(activeIdx);
+}
+window.resetHomeBase = resetHomeBase;
 function setTempFromPlace(idx){
   const p = PLACES[idx];
-  saveTempOrigin({name:p.name, lat:p.lat, lng:p.lng, placeIdx:idx});
+  saveTempOrigin({name:p.name, lat:p.lat, lng:p.lng, pid:p.pid, placeIdx:idx});
   if(activeIdx===idx) openDetail(idx);
 }
 function clearTempOrigin(){ saveTempOrigin(null); if(activeIdx>=0) openDetail(activeIdx); }
@@ -349,6 +380,12 @@ window.setTempFromPlace = setTempFromPlace;
 window.clearTempOrigin = clearTempOrigin;
 
 function catClass(c){ return c ? c.toLowerCase() : ""; }
+function catTagHtml(p){
+  return p.category ? ` · <span class="cat-tag ${catClass(p.category)}">${p.category}</span>` : '';
+}
+function isDefaultHome(){
+  return !homeBase.custom && homeBase.placeIdx === DEFAULT_HOME.placeIdx;
+}
 
 function updateHomeBadge(){
   const el = document.getElementById('homeBadge');
@@ -357,12 +394,21 @@ function updateHomeBadge(){
   const isTemp = !!tempOrigin;
   const pinSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>`;
   el.className = 'home-badge' + (isTemp ? ' temp' : '');
-  el.innerHTML = `${pinSvg}<span>${isTemp ? 'Next directions from' : 'Home base'}: <b>${origin.name}</b></span>`;
+  const resetBtn = (!isTemp && !isDefaultHome())
+    ? ` <button type="button" onclick="resetHomeBase()" style="margin-left:auto;border:none;background:transparent;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">Reset to hotel</button>`
+    : '';
+  el.innerHTML = `${pinSvg}<span>${isTemp ? 'Next directions from' : 'Home base'}: <b>${origin.name}</b></span>${resetBtn}`;
   el.style.display = 'flex';
 }
 
 function refreshHomeMarker(){
+  markers.forEach((m, i)=> m.el.classList.toggle('home', isHomePlace(i)));
   if(!homeMarker) return;
+  if(!homeBase.custom && homeBase.placeIdx != null){
+    homeMarker.map = null;
+    return;
+  }
+  homeMarker.map = map;
   homeMarker.position = {lat:homeBase.lat, lng:homeBase.lng};
 }
 
@@ -392,7 +438,7 @@ async function initMap(){
 
   PLACES.forEach((p, idx)=>{
     const el = document.createElement('div');
-    el.className = 'num-chip';
+    el.className = 'num-chip' + (isHomePlace(idx) ? ' home' : '');
     el.textContent = (idx+1);
     const marker = new AdvancedMarkerElement({ map, position:{lat:p.lat, lng:p.lng}, content:el });
     marker.addListener('gmp-click', ()=> openDetail(idx));
@@ -404,6 +450,7 @@ async function initMap(){
   homeEl.className = 'num-chip home';
   homeEl.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>`;
   homeMarker = new AdvancedMarkerElement({ map, position:{lat:homeBase.lat, lng:homeBase.lng}, content:homeEl, zIndex:500 });
+  refreshHomeMarker();
 
   buildList();
   updateHomeBadge();
@@ -416,11 +463,10 @@ function refreshChips(){
 }
 
 function isHomePlace(idx){
-  return homeBase.placeIdx === idx ||
-    (homeBase.placeIdx == null && Math.abs(PLACES[idx].lat - homeBase.lat) < 0.0001 && Math.abs(PLACES[idx].lng - homeBase.lng) < 0.0001);
+  return !homeBase.custom && homeBase.placeIdx === idx;
 }
 function placeMatchesFilter(p){
-  return activeFilter === "all" || p.category === activeFilter;
+  return p.home || activeFilter === "all" || p.category === activeFilter;
 }
 function updateMarkerVisibility(){
   markers.forEach((m, i)=>{
@@ -438,8 +484,8 @@ function buildList(){
     div.className = 'list-item' + (isHomePlace(idx) ? ' home' : '');
     div.dataset.idx = idx;
     const meta = (p.rating != null)
-      ? `<span><b>${p.rating.toFixed(1)}</b> <span class="star">★</span> (${p.count.toLocaleString()})</span> · <span>${p.type}</span> · <span class="cat-tag ${catClass(p.category)}">${p.category}</span>`
-      : `<span>${p.type}</span> · <span class="cat-tag ${catClass(p.category)}">${p.category}</span>`;
+      ? `<span><b>${p.rating.toFixed(1)}</b> <span class="star">★</span> (${p.count.toLocaleString()})</span> · <span>${p.type}</span>${catTagHtml(p)}`
+      : `<span>${p.type}</span>${catTagHtml(p)}`;
     const thumbInner = (p.photos && p.photos.length)
       ? `<img src="${p.photos[0]}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`
       : photoIcon;
@@ -534,8 +580,8 @@ function openDetail(idx){
   numEl.style.background = isHomePlace(idx) ? '#f5a623' : '';
   document.getElementById('dName').textContent = p.name;
   document.getElementById('dSub').innerHTML = (p.rating != null)
-    ? `<b>${p.rating.toFixed(1)}</b> <span class="star">★</span> <span>(${p.count.toLocaleString()})</span> · <span>${p.type}</span> · <span class="cat-tag ${catClass(p.category)}">${p.category}</span>`
-    : `<span>${p.type}</span> · <span class="cat-tag ${catClass(p.category)}">${p.category}</span>`;
+    ? `<b>${p.rating.toFixed(1)}</b> <span class="star">★</span> <span>(${p.count.toLocaleString()})</span> · <span>${p.type}</span>${catTagHtml(p)}`
+    : `<span>${p.type}</span>${catTagHtml(p)}`;
 
   const fromLabel = tempOrigin ? tempOrigin.name : homeBase.name;
   let html = `<a class="btn-primary" href="${directionsUrl(p)}" target="_blank" rel="noopener">
