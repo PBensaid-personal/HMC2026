@@ -48,11 +48,6 @@
   .panel-head h1{margin:0;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.4px;}
   .panel-head h1 span{font-weight:normal;}
   .panel-head p{margin:16px 0 0;color:#4b5563;font-size:16px;line-height:1.45;}
-  .home-badge{margin:12px 0 0;padding:8px 12px;background:#fff8eb;border-radius:12px;
-    font-size:13.5px;color:#92400e;display:flex;align-items:center;gap:8px;line-height:1.3;}
-  .home-badge svg{flex:0 0 16px;width:16px;height:16px;color:#f5a623;}
-  .home-badge.temp{background:#eff6ff;color:#1e40af;}
-  .home-badge.temp svg{color:#3b82f6;}
   .filters{display:flex;gap:8px;margin:14px 0 0;flex-wrap:wrap;}
   .filter-chip{border:1.5px solid #e2e2e2;background:#fff;border-radius:20px;
     padding:7px 14px;font-size:13.5px;font-weight:500;cursor:pointer;color:#4b5563;
@@ -74,8 +69,9 @@
   .thumb{width:80px;height:80px;flex:0 0 80px;border-radius:14px;background:#ededed;
     display:flex;align-items:center;justify-content:center;overflow:hidden;}
   .thumb svg{width:30px;height:30px;opacity:.4;color:#fff;}
-  .li-body{min-width:0;}
-  .li-body h3{margin:0;font-size:20px;font-weight:700;letter-spacing:-.2px;}
+  .li-body{min-width:0;flex:1;}
+  .li-title{display:flex;align-items:center;gap:10px;min-width:0;}
+  .li-title h3{margin:0;font-size:20px;font-weight:700;letter-spacing:-.2px;min-width:0;}
   .li-meta{margin:5px 0 0;font-size:15px;color:#4b5563;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .li-meta .star{color:var(--star);}
   .li-desc{margin:6px 0 0;font-size:14.5px;color:#6b7280;line-height:1.35;
@@ -218,7 +214,6 @@
   <div class="panel-head">
     <h1><span style="font-weight:normal">All things</span> Rome</h1>
     <p>Stops from the NYT itinerary — museums, ruins, restaurants, bars, and gelato. Friday evening through Sunday lunch.</p>
-    <div class="home-badge" id="homeBadge" style="display:none"></div>
     <div class="filters" id="filters">
       <button class="filter-chip on" data-cat="all">All</button>
       <button class="filter-chip" data-cat="Food">Food</button>
@@ -263,11 +258,11 @@
 </div>
 
 <script>
-const HOME_KEY = "rome_home_base_v3";
+const HOME_KEY = "rome_home_base_v4";
 const TEMP_ORIGIN_KEY = "rome_temp_origin";
 
 const PLACES = [
-  {name:"Elizabeth Unique Hotel", pid:"ChIJaW8J1dJgLxMRhO9Xo9F7kH0", lat:41.9070, lng:12.4773, type:"Hotel", home:true, address:"Via delle Colonnette 35, 00186 Roma", phone:"+39 06 3223633", website:"https://www.elizabethgroup.it/en/elizabeth-unique-rome/", notes:"Home base. Boutique Design Hotel on Via delle Colonnette 35 — a quiet corner of the Tridente, steps from Piazza del Popolo. Perfect starting point for exploring Rome."},
+  {name:"Elizabeth Unique Hotel", pid:"ChIJz4tK4l9gLxMREJ_7uW7s468", lat:41.9070, lng:12.4773, type:"Hotel", home:true, address:"Via delle Colonnette 35, 00186 Roma", phone:"+39 06 3223633", website:"https://www.elizabethgroup.it/en/elizabeth-unique-rome/", photos:["https://cdn.blastness.biz/media/1303/unique-top/thumbs/full/1920-facciata-1.jpg","https://cdn.blastness.biz/media/1303/unique-vertical-gallery/thumbs/full/1024-vertical-hall-4.jpg","https://cdn.blastness.biz/media/1303/unique-vertical-gallery/thumbs/full/1024-vertical-library-2.jpg"], notes:"Home base. Boutique Design Hotel on Via delle Colonnette 35 — a quiet corner of the Tridente, steps from Piazza del Popolo. Perfect starting point for exploring Rome."},
   {name:"Museo della Forma Urbis", pid:"ChIJZ7c578lhLxMR3G-oln-WuLM", lat:41.8872, lng:12.4923, type:"Museum", category:"Destination", address:"Via di San Gregorio, 30, 00184 Roma", notes:"New museum mixing archaeology and cartography. Floor embossed with an 18th-century map + 3rd-century stone slabs. Free archaeological park outside. €11 admission. Last entry 6:15 PM."},
   {name:"Domus Tiberiana (Palatine Hill)", pid:"ChIJA1aK_LRhLxMRJ6Hw0arUiyI", lat:41.8896, lng:12.4875, type:"Ruin", category:"Destination", address:"Palatine Hill, Via di San Gregorio, 00184 Roma", notes:"Reopened in 2023 after decades of closure. Multimedia exhibitions in a 1st-century palace. Prime sunset views of the Forum and Colosseum. Combined ticket with Forum + Colosseum €18, valid 24 hrs."},
   {name:"Uma Roma", pid:"ChIJV59_iGxhLxMRN9TZz9JP0rY", lat:41.8606, lng:12.4720, type:"Restaurant", category:"Food", address:"Via Girolamo Benzoni, 34, 00154 Roma", phone:"+39 334 385 5945", whatsapp:"+39 334 385 5945", notes:"Scandinavian-minimalist trattoria in Garbatella. Fermentation-focused tasting menu by two Italian chefs (one formerly at Noma). 4 courses + 4 snacks €50. Book well ahead — very popular."},
@@ -320,11 +315,12 @@ function loadHomeBase(){
   }catch(e){}
   localStorage.removeItem("rome_home_base");
   localStorage.removeItem("rome_home_base_v2");
+  localStorage.removeItem("rome_home_base_v3");
   const home = {...DEFAULT_HOME};
   localStorage.setItem(HOME_KEY, JSON.stringify(home));
   return home;
 }
-function saveHomeBase(h){ homeBase = h; localStorage.setItem(HOME_KEY, JSON.stringify(h)); updateHomeBadge(); refreshHomeMarker(); }
+function saveHomeBase(h){ homeBase = h; localStorage.setItem(HOME_KEY, JSON.stringify(h)); refreshHomeMarker(); }
 function loadTempOrigin(){
   localStorage.removeItem(TEMP_ORIGIN_KEY);
   try{
@@ -337,7 +333,6 @@ function saveTempOrigin(o){
   tempOrigin = o;
   if(o) sessionStorage.setItem(TEMP_ORIGIN_KEY, JSON.stringify(o));
   else sessionStorage.removeItem(TEMP_ORIGIN_KEY);
-  updateHomeBadge();
 }
 function getDirectionsOrigin(){ return tempOrigin || homeBase; }
 function resolvePid(loc){
@@ -384,24 +379,6 @@ window.setTempFromPlace = setTempFromPlace;
 window.clearTempOrigin = clearTempOrigin;
 
 function waUrl(num){ return `https://wa.me/${num.replace(/\D/g,'')}`; }
-function isDefaultHome(){
-  return !homeBase.custom && homeBase.placeIdx === DEFAULT_HOME.placeIdx;
-}
-
-function updateHomeBadge(){
-  const el = document.getElementById('homeBadge');
-  const origin = getDirectionsOrigin();
-  if(!origin){ el.style.display='none'; return; }
-  const isTemp = !!tempOrigin;
-  const pinSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>`;
-  el.className = 'home-badge' + (isTemp ? ' temp' : '');
-  const resetBtn = (!isTemp && !isDefaultHome())
-    ? ` <button type="button" onclick="resetHomeBase()" style="margin-left:auto;border:none;background:transparent;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">Reset to hotel</button>`
-    : '';
-  el.innerHTML = `${pinSvg}<span>${isTemp ? 'Next directions from' : 'Home base'}: <b>${origin.name}</b></span>${resetBtn}`;
-  el.style.display = 'flex';
-}
-
 function refreshHomeMarker(){
   markers.forEach((m, i)=> m.el.classList.toggle('home', isHomePlace(i)));
   if(!homeMarker) return;
@@ -454,7 +431,6 @@ async function initMap(){
   refreshHomeMarker();
 
   buildList();
-  updateHomeBadge();
   loadAllPhotos();
 }
 window.initMap = initMap;
@@ -491,10 +467,12 @@ function buildList(){
       ? `<img src="${p.photos[0]}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`
       : photoIcon;
     div.innerHTML = `
-      <div class="li-num">${idx+1}</div>
       <div class="thumb" style="background:${gradFor(p)}">${thumbInner}</div>
       <div class="li-body">
-        <h3>${p.name}</h3>
+        <div class="li-title">
+          <span class="li-num">${idx+1}</span>
+          <h3>${p.name}</h3>
+        </div>
         ${meta ? `<div class="li-meta">${meta}</div>` : ''}
         <div class="li-desc">${p.notes||''}</div>
       </div>`;
@@ -718,7 +696,6 @@ document.addEventListener('mouseup', e=>{
 });
 
 if(isMobile()) panel.classList.add('collapsed');
-updateHomeBadge();
 
 // gallery: swipe + keyboard
 (function(){
