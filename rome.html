@@ -141,20 +141,24 @@
   .keywarn code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:5px;font-size:13px;}
 
   .sheet-handle{display:none;}
+  .sheet-title-main,.sheet-title-sub,.sheet-grabber{display:none;}
 
   @media (max-width:760px){
     :root{--sheet-h:72vh;}
     .panel{top:auto;left:0;right:0;bottom:0;width:100%;height:var(--sheet-h);border-radius:22px 22px 0 0;
       box-shadow:0 -8px 30px rgba(0,0,0,.18);transition:height .28s ease;}
     .panel.collapsed{height:44px;min-height:44px;}
-    .sheet-handle{display:flex;align-items:center;justify-content:center;
-      width:100%;height:44px;flex:0 0 44px;cursor:grab;touch-action:none;
+    .sheet-handle{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      width:100%;height:44px;flex:0 0 44px;padding:0 22px;cursor:grab;touch-action:none;
       -webkit-user-select:none;user-select:none;}
-    .sheet-handle::before{content:"";display:block;width:42px;height:5px;border-radius:3px;background:#a1a1aa;}
+    .sheet-title-main,.sheet-title-sub,.sheet-grabber{display:block;}
+    .sheet-title-main{font-size:23px;font-weight:800;letter-spacing:-.4px;line-height:1;flex:1 1 0;min-width:0;}
+    .sheet-title-sub{font-size:23px;font-weight:400;letter-spacing:-.4px;line-height:1;flex:1 1 0;min-width:0;text-align:right;}
+    .sheet-grabber{width:42px;height:5px;border-radius:3px;background:#a1a1aa;flex:0 0 42px;}
     .panel.collapsed .panel-head,
     .panel.collapsed .list{display:none;}
     .panel-head{padding:6px 22px 12px;}
-    .panel-head h1{font-size:23px;}
+    .panel-head h1{display:none;}
     .panel-head p{font-size:14px;margin-top:10px;}
     .list{padding:4px 12px 24px;}
     .li-body h3{font-size:17px;}
@@ -214,7 +218,11 @@
 <div id="map"></div>
 
 <div class="panel" id="panel">
-  <div class="sheet-handle" id="handle"></div>
+  <div class="sheet-handle" id="handle">
+    <span class="sheet-title-main">Rome</span>
+    <span class="sheet-grabber" aria-hidden="true"></span>
+    <span class="sheet-title-sub">Fall 2026</span>
+  </div>
   <div class="panel-head">
     <h1>Rome<span>Fall 2026</span></h1>
     <div class="filters" id="filters">
@@ -439,6 +447,7 @@ async function initMap(){
 
   buildList();
   loadAllPhotos();
+  updateMapPadding(false);
 }
 window.initMap = initMap;
 
@@ -451,6 +460,9 @@ function isHomePlace(idx){
 }
 function placeMatchesFilter(p){
   return activeFilter === "all" || p.category === activeFilter;
+}
+function filteredIndices(){
+  return PLACES.map((_, i)=>i).filter(i=>placeMatchesFilter(PLACES[i]));
 }
 function updateMarkerVisibility(){
   markers.forEach((m, i)=>{
@@ -616,21 +628,27 @@ function openDetail(idx){
   if(p.website){ const d=p.website.replace(/^https?:\/\//,'').replace(/\/$/,''); c += `<a href="${p.website}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>${d}</a>`; }
   document.getElementById('dContact').innerHTML = c;
 
-  document.getElementById('navCount').textContent = `${idx+1} of ${PLACES.length}`;
-  document.getElementById('navPrev').disabled = idx===0;
-  document.getElementById('navNext').disabled = idx===PLACES.length-1;
+  const filtered = filteredIndices();
+  const pos = filtered.indexOf(idx);
+  document.getElementById('navCount').textContent = `${pos+1} of ${filtered.length}`;
+  document.getElementById('navPrev').disabled = pos <= 0;
+  document.getElementById('navNext').disabled = pos >= filtered.length - 1;
 
   detail.classList.add('show');
-  if(map) map.panTo({lat:p.lat, lng:p.lng});
+  requestAnimationFrame(()=> updateMapPadding(true));
 }
 function closeDetail(){
   detail.classList.remove('show'); activeIdx=-1; refreshChips();
   document.querySelectorAll('.list-item').forEach(el=>el.classList.remove('active'));
+  requestAnimationFrame(()=> updateMapPadding(false));
 }
 function nav(dir){
-  let n = activeIdx + dir;
-  if(n<0) n=0; if(n>PLACES.length-1) n=PLACES.length-1;
-  openDetail(n);
+  const filtered = filteredIndices();
+  const pos = filtered.indexOf(activeIdx);
+  if(pos < 0) return;
+  const nextPos = pos + dir;
+  if(nextPos < 0 || nextPos >= filtered.length) return;
+  openDetail(filtered[nextPos]);
 }
 
 function sharePrototype(){
@@ -655,9 +673,24 @@ const handle = document.getElementById('handle');
 let dragStartY = null, dragMoved = false;
 function isMobile(){ return window.matchMedia('(max-width:760px)').matches; }
 
+function sheetBottomPx(){
+  if(!isMobile()) return 0;
+  if(detail.classList.contains('show')) return detail.offsetHeight || 0;
+  return panel.offsetHeight || 0;
+}
+function updateMapPadding(recenter){
+  if(!map) return;
+  map.setPadding({ top:0, right:0, bottom:sheetBottomPx(), left:0 });
+  if(recenter && activeIdx >= 0){
+    const p = PLACES[activeIdx];
+    if(p) map.panTo({ lat:p.lat, lng:p.lng });
+  }
+}
+
 function setPanelCollapsed(collapsed){
   if(!isMobile()) return;
   panel.classList.toggle('collapsed', collapsed);
+  updateMapPadding(activeIdx >= 0 && detail.classList.contains('show'));
 }
 
 handle.addEventListener('touchstart', e=>{
@@ -700,6 +733,11 @@ document.addEventListener('mouseup', e=>{
 });
 
 if(isMobile()) panel.classList.add('collapsed');
+
+panel.addEventListener('transitionend', e=>{
+  if(e.propertyName === 'height') updateMapPadding(activeIdx >= 0 && detail.classList.contains('show'));
+});
+window.addEventListener('resize', ()=> updateMapPadding(activeIdx >= 0 && detail.classList.contains('show')));
 
 // gallery: swipe + keyboard
 (function(){
