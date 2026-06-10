@@ -260,11 +260,11 @@
     <div class="contact" id="dContact"></div>
   </div>
   <div class="detail-nav">
-    <button class="nav-arrow" id="navPrev" onclick="nav(-1)" aria-label="Previous">
+    <button class="nav-arrow" id="navPrev" type="button" aria-label="Previous">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <span class="nav-count" id="navCount"></span>
-    <button class="nav-arrow" id="navNext" onclick="nav(1)" aria-label="Next">
+    <button class="nav-arrow" id="navNext" type="button" aria-label="Next">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   </div>
@@ -455,7 +455,7 @@ async function initMap(){
 
   buildList();
   loadAllPhotos();
-  syncMapView();
+  applyMapPadding();
 }
 window.initMap = initMap;
 
@@ -592,7 +592,10 @@ function photoGoto(i){
 }
 
 function openDetail(idx){
-  activeIdx = idx; refreshChips();
+  activeIdx = idx;
+  applyMapPadding();
+  focusPlaceOnMap(idx);
+  refreshChips();
   const p = PLACES[idx];
   document.querySelectorAll('.list-item').forEach(el=>el.classList.toggle('active', +el.dataset.idx===idx));
 
@@ -664,14 +667,17 @@ function openDetail(idx){
   document.getElementById('navNext').disabled = pos >= filtered.length - 1;
 
   detail.classList.add('show');
-  scheduleMapViewSync();
+  applyMapPadding();
+  focusPlaceOnMap(idx);
+  requestAnimationFrame(()=> focusPlaceOnMap(idx));
 }
 function closeDetail(){
   detail.classList.remove('show'); activeIdx=-1; refreshChips();
   document.querySelectorAll('.list-item').forEach(el=>el.classList.remove('active'));
-  scheduleMapViewSync();
+  applyMapPadding();
+  if(map) google.maps.event.trigger(map, 'resize');
 }
-function nav(dir){
+function stepDetail(dir){
   const filtered = filteredIndices();
   const pos = filtered.indexOf(activeIdx);
   if(pos < 0) return;
@@ -679,6 +685,7 @@ function nav(dir){
   if(nextPos < 0 || nextPos >= filtered.length) return;
   openDetail(filtered[nextPos]);
 }
+window.stepDetail = stepDetail;
 
 function sharePrototype(){
   const url = window.location.href;
@@ -708,6 +715,7 @@ function sheetBottomPx(){
   return panel.offsetHeight || 0;
 }
 let mapSyncOverlay = null;
+let mapPanGen = 0;
 function getMapSyncOverlay(){
   if(!mapSyncOverlay){
     mapSyncOverlay = new google.maps.OverlayView();
@@ -716,43 +724,51 @@ function getMapSyncOverlay(){
   }
   return mapSyncOverlay;
 }
-function recenterActivePlace(){
-  if(!map || activeIdx < 0) return;
-  const p = PLACES[activeIdx];
-  if(!p) return;
-  const latLng = { lat: p.lat, lng: p.lng };
-  map.panTo(latLng);
-  if(!isMobile() || sheetBottomPx() <= 0) return;
+function applyMapPadding(){
+  if(!map) return;
+  let bottom = 0, right = 0;
+  if(isMobile()) bottom = sheetBottomPx();
+  else if(detail.classList.contains('show')) right = (detail.offsetWidth || 540) + 44;
+  map.setPadding({ top:0, right, bottom, left:0 });
+}
+function runMapNudge(center, gen){
+  if(!map || gen !== mapPanGen || !isMobile() || sheetBottomPx() <= 0) return;
   const bottom = sheetBottomPx();
   const ov = getMapSyncOverlay();
   ov.setMap(map);
-  google.maps.event.addListenerOnce(map, 'idle', ()=>{
-    const proj = ov.getProjection();
-    if(!proj) return;
-    const pt = proj.fromLatLngToContainerPixel(latLng);
-    if(!pt) return;
-    const div = map.getDiv();
-    const dx = Math.round(pt.x - div.clientWidth / 2);
-    const dy = Math.round(pt.y - (div.clientHeight - bottom) / 2);
-    if(dx || dy) map.panBy(dx, dy);
-  });
+  const proj = ov.getProjection();
+  if(!proj) return;
+  const latLng = center.lat != null ? new google.maps.LatLng(center.lat, center.lng) : center;
+  const pt = proj.fromLatLngToContainerPixel(latLng);
+  if(!pt) return;
+  const div = map.getDiv();
+  const dx = Math.round(pt.x - div.clientWidth / 2);
+  const dy = Math.round(pt.y - (div.clientHeight - bottom) / 2);
+  if(dx || dy) map.panBy(dx, dy);
 }
-function focusMapOnActivePlace(){
-  if(!map || activeIdx < 0) return;
-  recenterActivePlace();
-  google.maps.event.addListenerOnce(map, 'idle', recenterActivePlace);
-}
-function syncMapView(){
-  if(!map) return;
-  map.setPadding({ top:0, right:0, bottom:sheetBottomPx(), left:0 });
-  google.maps.event.trigger(map, 'resize');
+function focusPlaceOnMap(idx){
+  if(!map || idx < 0) return;
+  const p = PLACES[idx];
+  if(!p) return;
+  const gen = ++mapPanGen;
+  const center = { lat: p.lat, lng: p.lng };
+  if(typeof map.moveCamera === 'function') map.moveCamera({ center });
+  else map.setCenter(center);
+  map.panTo(center);
+  if(!isMobile() || sheetBottomPx() <= 0) return;
+  const ov = getMapSyncOverlay();
+  ov.setMap(map);
+  const nudge = ()=> runMapNudge(center, gen);
+  google.maps.event.addListenerOnce(map, 'idle', nudge);
+  setTimeout(nudge, 120);
 }
 function scheduleMapViewSync(){
-  syncMapView();
-  focusMapOnActivePlace();
+  applyMapPadding();
+  if(activeIdx >= 0) focusPlaceOnMap(activeIdx);
   requestAnimationFrame(()=>{
-    syncMapView();
-    focusMapOnActivePlace();
+    applyMapPadding();
+    if(map) google.maps.event.trigger(map, 'resize');
+    if(activeIdx >= 0) focusPlaceOnMap(activeIdx);
   });
 }
 
@@ -802,6 +818,9 @@ document.addEventListener('mouseup', e=>{
 });
 
 if(isMobile()) panel.classList.add('collapsed');
+
+document.getElementById('navPrev').addEventListener('click', ()=> stepDetail(-1));
+document.getElementById('navNext').addEventListener('click', ()=> stepDetail(1));
 
 panel.addEventListener('transitionend', e=>{
   if(e.propertyName === 'height') scheduleMapViewSync();
