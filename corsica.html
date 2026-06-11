@@ -59,8 +59,9 @@
   .li-num{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--accent);
     color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;}
   .list-item.home .li-num{background:#f5a623;}
-  .thumb{width:80px;height:80px;flex:0 0 80px;border-radius:14px;background:#ededed;
+  .thumb{position:relative;width:80px;height:80px;flex:0 0 80px;border-radius:14px;background:#ededed;
     display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .thumb .li-num{position:absolute;top:0;left:0;z-index:1;box-shadow:0 1px 5px rgba(0,0,0,.4);}
   .thumb svg{width:30px;height:30px;opacity:.4;color:#fff;}
   .li-body{min-width:0;flex:1;}
   .li-title{display:flex;align-items:center;gap:10px;min-width:0;}
@@ -70,11 +71,11 @@
   .li-desc{margin:6px 0 0;font-size:14.5px;color:#6b7280;line-height:1.35;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 
-  .detail{position:absolute;top:22px;right:22px;width:540px;max-width:calc(100vw - 44px);
+  .detail{position:absolute;top:22px;right:22px;bottom:22px;width:540px;max-width:calc(100vw - 44px);
     background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);z-index:1200;
     overflow:hidden;display:none;flex-direction:column;}
   .detail.show{display:flex;}
-  .detail-photo{position:relative;height:300px;background:#ddd;}
+  .detail-photo{position:relative;flex:0 0 auto;height:300px;background:#ddd;}
   .detail-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
   .detail-photo .dots{position:absolute;left:0;right:0;bottom:14px;z-index:3;display:flex;gap:7px;justify-content:center;}
   .detail-photo .dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55);cursor:pointer;transition:background .14s, transform .14s;}
@@ -90,7 +91,7 @@
   .close-btn{position:absolute;top:16px;right:16px;z-index:3;width:36px;height:36px;border-radius:50%;
     background:rgba(255,255,255,.92);border:none;cursor:pointer;display:flex;align-items:center;
     justify-content:center;font-size:18px;color:#333;box-shadow:0 2px 8px rgba(0,0,0,.18);}
-  .detail-body{padding:24px 28px 26px;overflow-y:auto;}
+  .detail-body{flex:1 1 auto;min-height:0;padding:24px 28px 26px;overflow-y:auto;}
   .detail-title{display:flex;align-items:center;gap:12px;}
   .detail-title .li-num{flex:0 0 30px;width:30px;height:30px;font-size:15px;}
   .detail-body h2{margin:0;font-size:27px;font-weight:800;letter-spacing:-.3px;}
@@ -241,7 +242,7 @@
       <button class="filter-chip on" data-cat="all">All</button>
       <button class="filter-chip" data-cat="Food">Food</button>
       <button class="filter-chip" data-cat="Fun">Fun</button>
-      <button class="filter-chip" data-cat="Destination">Destination</button>
+      <button class="filter-chip" data-cat="Destination">Desinations</button>
     </div>
   </div>
   <div class="list" id="list"></div>
@@ -497,10 +498,9 @@ function buildList(){
       ? `<img src="${p.photos[0]}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`
       : photoIcon;
     div.innerHTML = `
-      <div class="thumb" style="background:${gradFor(p)}">${thumbInner}</div>
+      <div class="thumb" style="background:${gradFor(p)}"><span class="li-num">${idx+1}</span>${thumbInner}</div>
       <div class="li-body">
         <div class="li-title">
-          <span class="li-num">${idx+1}</span>
           <h3>${p.name}</h3>
         </div>
         ${meta ? `<div class="li-meta">${meta}</div>` : ''}
